@@ -1,57 +1,153 @@
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { PaperProvider } from 'react-native-paper';
+import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import HomeScreen from './src/HomeScreen';
-import DetailsScreen from './src/DetailsScreen';
-import CustomNavigationBar from './src/CustomNavigationBar';
-import Exercise6 from './src/Exercise6';
-import { Image } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import FontAwesome from 'react-native-vector-icons/FontAwesome'; 
+import HomeScreen from './screens/HomeScreen';
+import Favourite from './screens/Favourite';
+import Profile from './screens/Profile';
+import Notifications from './screens/Notifications';
+import { useNavigation } from '@react-navigation/native';
 
-const Stack = createNativeStackNavigator();
-const NewI=()=>{
-  return(
-    <Image
-      source={require("./assets/br2.png")}
-      style={{
-        flex:1,
-        width:400,
-        height:200,
-        justifyContent:"center",
-        alignSelf:"center"
-      }}
-    />
-  )
-}
-const App = () => {
+const Tab = createBottomTabNavigator();
+const Drawer = createDrawerNavigator();
+
+function TabNavigator({ navigation }) {
+  React.useEffect(() => {
+    const unsubscribeTabPress = navigation.addListener('tabPress', e => {
+      const routeName = e.target.options.title;
+      navigation.setOptions({
+        headerTitle: routeName
+      });
+    });
+
+    return unsubscribeTabPress;
+  }, [navigation]);
+
   return (
-    <PaperProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName='Home'
-          screenOptions={{
-            header: (props) => <CustomNavigationBar {...props} />,
-          }} >
-            <Stack.Screen name="Home" component={HomeScreen}
-            options={{
-              headerTintColor:"blue",
-              headerStyle:{backgroundColor:"aqua"},
-              headerTitleStyle:{backgroundColor:"aqua"},
-            }} />
-            <Stack.Screen 
-              name="Details" component={DetailsScreen}
-              options={{
-                title:"Detail Screen",
-                headerTintColor:"red",
-                headerStyle:{backgroundColor:"aqua"},
-                headerBackground:()=><NewI/>
-              }}
-              />
-            <Stack.Screen name="Example2" component={Exercise6}/>
-        </Stack.Navigator>
-      </NavigationContainer>
-    </PaperProvider>
-  )
+    <Tab.Navigator
+      shifting={true}
+      activeColor="blue"
+      inactiveColor="gray"
+      barStyle={{ backgroundColor: 'lightgray' }}
+      screenOptions={{
+        tabBarActiveTintColor: 'blue',
+        tabBarInactiveTintColor: 'gray',
+        tabBarStyle: {
+          display: 'flex', 
+        },
+      }}>
+      <Tab.Screen
+        name="home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="home" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="favourite"
+        component={Favourite}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="heart" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="profile"
+        component={Profile}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="user" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="notifications"
+        component={Notifications}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="bell" color={color} size={size} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
 }
 
-export default App
+function DrawerNavigator() {
+  const navigation = useNavigation();
+
+  React.useEffect(() => {
+    const unsubscribeDrawerOpen = navigation.addListener('drawerOpen', () => {
+      navigation.setParams({ title: 'Menu' });
+    });
+
+    const unsubscribeDrawerClose = navigation.addListener('drawerClose', () => {
+      const currentRoute = navigation.dangerouslyGetState().routes[
+        navigation.dangerouslyGetState().index
+      ];
+      const routeName = currentRoute.state?.routes[currentRoute.state.index]?.name;
+
+      if (routeName) {
+        navigation.setParams({ title: routeName });
+      }
+    });
+
+    return () => {
+      unsubscribeDrawerOpen();
+      unsubscribeDrawerClose();
+    };
+  }, [navigation]);
+
+  return (
+    <Drawer.Navigator initialRouteName="Home">
+      <Drawer.Screen
+        name="Home"
+        component={TabNavigator}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <FontAwesome name="home" color={color} size={size} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Profile"
+        component={TabNavigator}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <FontAwesome name="user" color={color} size={size} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Favourite"
+        component={TabNavigator}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <FontAwesome name="heart" color={color} size={size} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Notifications"
+        component={TabNavigator}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <FontAwesome name="bell" color={color} size={size} />
+          ),
+        }}
+      />
+    </Drawer.Navigator>
+  );
+}
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <DrawerNavigator />
+    </NavigationContainer>
+  );
+}
